@@ -1,0 +1,85 @@
+{
+    "prefix":"!",
+    "emoji": {
+        "join":"🤠",
+        "start":"💥"
+    },
+    "cmd": {
+        "debug":["debug"],
+        "custom":["custom","roles","dist"],
+        "remain":["remaining","remain","left","remains"],
+        "mention":"<@",
+        "log":{
+            "win":["wins","won","winner","win","w"],
+            "draw":["draws","drew","draw","tie","tied","ties"],
+            "loss":["lost","loses","lose","l","died","dies","die","defeated","defeats","defeat","d","killed","kills","kill"]
+        },
+        "help":["help","h"],
+        "rules":["rules","rule","r","?"],
+        "cancel":["cancel","end","c"]
+    },
+    "roles":{
+        "sheriff":{
+            "code":"s",
+            "article":"the",
+            "plural":"sheriffs",
+            "short":"The Sheriff wins if all Outlaws have lost. The Sheriff goes first, starts with 50 life, and gets a Plains token.",
+            "long":"You are the starting player and your starting life total is 50.\n\nAt the beginning of your first upkeep, create a Plains land token.\n\nWhenever an Outlaw loses the game, if all Outlaws have lost the game, you win the game. _(A Beggar counts as an Outlaw if they became an Outlaw this game.)_"
+        },
+        "deputy":{
+            "code":"d",
+            "article":"a",
+            "plural":"deputies",
+            "short":"Deputies win if the Sheriff wins.",
+            "long":"You become secret teammates with the Sheriff and all other Deputies. _(Any card that refers to your team refers to you instead.)_"
+        },
+        "outlaw":{
+            "code":"o",
+            "article":"an",
+            "plural":"outlaws",
+            "short":"Outlaws win if the Sheriff loses.",
+            "long":"You become secret teammates with all other Outlaws. _(Any card that refers to your team refers to you instead.)_\n\nWhen the Sheriff loses the game, you win the game."
+        },
+        "renegade":{
+            "code":"r",
+            "article":"a",
+            "plural":"renegades",
+            "short":"Renegades win if half of all players have lost, rounded up.",
+            "long":"When the game begins, note the number equal to half the number of players, rounded up.\n\nWhenever another player loses the game, if the number of players who have lost the game is greater than or equal to the noted number, you win the game."
+        },
+        "beggar":{
+            "code":"b",
+            "article":"a",
+            "plural":"beggars",
+            "short":"Beggars win if they're the first player to lose. If another player loses first, the Beggar takes on that player's role.",
+            "long":"Whenever another player loses the game, you become that role. _(You are no longer the Beggar.)_\n\nIf another player would cause you to lose the game, you win the game instead. _(Another player causes you to lose the game if an effect they control causes you to lose the game, have ten or more poison counters, draw a card while your library has no cards in it, reduces your life total to less than 1, or if a source they control causes damage that reduces your life total to less than 1.)_"
+        }
+    },
+    "roledists":{
+        "2":{
+            "sheriff":1,
+            "outlaw":1
+        },
+        "6":{
+            "sheriff":1,
+            "deputy":1,
+            "outlaw":2,
+            "renegade":1,
+            "beggar":1
+        },
+        "7":{
+            "sheriff":1,
+            "deputy":1,
+            "outlaw":3,
+            "renegade":1,
+            "beggar":1
+        },
+        "8":{
+            "sheriff":1,
+            "deputy":2,
+            "outlaw":3,
+            "renegade":1,
+            "beggar":1
+        }
+    }
+}
