@@ -86,9 +86,10 @@ async function postGamePromptMessage(channel, args) {
 			toggleBotReactionOnGamePrompt(message, emoji.start, startEmojiConditions(players));
 			toggleBotReactionOnGamePrompt(message, emoji.join, joinEmojiConditions(players));
 		} else if (reaction.emoji.name === emoji.start) {
+			// TODO solve starting two games at once?
 			// If we have enough players, start a game!
 			var players = await getUsersWithReaction(message, emoji.join);
-			if (players.size === game.reqdPlayerCount || roledists[players.size]) {
+			if (!game.inProgress && players.size === game.reqdPlayerCount || roledists[players.size]) {
 				startGame(channel, players);
 				collector.stop();
 			}
@@ -314,8 +315,8 @@ function processGameChange(message, args) {
 		}
 		// Check Renegade win con
 		if (!game.roles.renegade.every(died)) {
-			console.log('renegade victory condition achieved!');
-			if (game.dead.length >= (Math.ceil(_.size(game.players) / 2))) {
+			if (game.dead.length >= (Math.ceil(game.players.size / 2))) {
+				console.log('renegade victory condition achieved!');
 				_.each(game.roles.renegade, (player) => {
 					if (!player.dead) { 
 						winners.renegade.push(player);
