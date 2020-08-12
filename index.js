@@ -131,7 +131,7 @@ function startGame(channel, players) {
 				`Reply \`${prefix} ${cmd.rules[0]} ${roleName}\` to get the detailed rules text for this role.`
 			);
 			game.roles[roleName].push(player);
-			game.players.find(p => p.id === player.id).role = roleName;
+			player.role = roleName;
 		}
 
 		// Stringify role counts for confirmation message
@@ -205,7 +205,7 @@ function processGameChange(message, args) {
 	var textArg = args.filter(arg => !arg.startsWith('<@'))[0];
 	if (cmd.log.win.includes(textArg)) {
 		console.log('process a win');
-		_.each(mentionedPlayers, (player) => {
+		mentionedPlayers.forEach((player) => {
 			if (player.role === 'sheriff' || player.role === 'deputy') {
 				winners.sheriff.push(...game.roles.sheriff);
 				winners.deputy.push(...game.roles.deputy);
@@ -224,7 +224,7 @@ function processGameChange(message, args) {
 		gameOver = 'win';
 	} else if (cmd.log.draw.includes(textArg)) {
 		console.log('process a draw');
-		_.each(mentionedPlayers, (player) => {
+		mentionedPlayers.forEach((player) => {
 			drawers[player.role].push(player);
 		});
 		gameOver = 'draw';
@@ -236,7 +236,7 @@ function processGameChange(message, args) {
 
 		game.dead.push(...mentionedPlayers);
 
-		_.each(mentionedPlayers, (player) => {
+		mentionedPlayers.forEach((player) => {
 			player.dead = true;
 			
 			console.log('processing dead player');
@@ -262,7 +262,7 @@ function processGameChange(message, args) {
 		if (game.roles.beggar.length) {
 			console.log('assigning beggar new role');
 			var newRoles = [];
-			_.each(game.roles.beggar, (player, idx) => {
+			game.roles.beggar.forEach((player, idx) => {
 				if (!player.winner && !player.dead) {
 					player.exBeggar = true;
 					var validBeggarRoles = mentionedPlayers.filter(p => p.role != 'sheriff');
@@ -283,7 +283,7 @@ function processGameChange(message, args) {
 			// Append any role changes to the message.
 			if (newRoles.length) {
 				gameStateMsg += '\n';
-				_.each(newRoles, (newRole) => {
+				newRoles.forEach((newRole) => {
 					gameStateMsg += `${newRoles.length > 1 ? 'A' : 'The'} Beggar is now ${game.roles[newRole].filter(p => !p.exBeggar).length > 1 ? roles[newRole].article : 'the'} **${newRole.capitalize()}**.\n`;
 				});
 			}
@@ -317,7 +317,7 @@ function processGameChange(message, args) {
 		if (!game.roles.renegade.every(died)) {
 			if (game.dead.length >= (Math.ceil(game.players.size / 2))) {
 				console.log('renegade victory condition achieved!');
-				_.each(game.roles.renegade, (player) => {
+				game.roles.renegade.forEach((player) => {
 					if (!player.dead) { 
 						winners.renegade.push(player);
 						gameOver = 'win';
@@ -456,7 +456,7 @@ async function getUsersWithReaction(message, emoji) {
 
 function getUsernames(players, capitalize) {
 	var usernames = [];
-	_.each(players, (player) => {
+	players.forEach((player) => {
 		usernames.push(capitalize ? player.username.capitalize() : player.username);
 	});
 	return usernames;
@@ -465,7 +465,7 @@ function getUsernames(players, capitalize) {
 function getSortedMentionedUsers(message) {
 	var users = [];
 
-	_.each(message.content.split(' '), (el) => {
+	message.content.split(' ').forEach((el) => {
 		var user = el.match(/^<@!?(\d+)>$/);
 		if (user) {
 			users.push(client.users.cache.get(user[1]));
@@ -492,7 +492,7 @@ String.prototype.capitalize = function() {
 Array.prototype.toListString = function() {
 	var string = '';
 	if (this.length > 2) {
-		_.each(this, (item, idx) => {
+		this.forEach((item, idx) => {
 			string += (idx < this.length - 1) ? `${item}, ` : `and ${item}`
 		});
 	} else if (this.length === 2) {
