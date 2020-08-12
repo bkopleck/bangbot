@@ -224,14 +224,7 @@ function processGameChange(message, args) {
 	} else if (cmd.log.draw.includes(textArg)) {
 		console.log('process a draw');
 		_.each(mentionedPlayers, (player) => {
-			if (player.role === 'sheriff' || player.role === 'deputy') {
-				drawers.sheriff.push(...game.roles.sheriff);
-				drawers.deputy.push(...game.roles.deputy);
-			} else if (player.role === 'outlaw') {
-				drawers.outlaw.push(...game.roles.outlaw);
-			} else {
-				drawers[player.role].push(player);
-			}
+			drawers[player.role].push(player);
 		});
 		gameOver = 'draw';
 	} else if (cmd.log.loss.includes(textArg)) {
