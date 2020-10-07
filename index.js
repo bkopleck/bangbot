@@ -74,7 +74,7 @@ async function postGamePromptMessage(channel, args) {
 	const filter = (reaction, user) => {
 		return [emoji.join,emoji.start].includes(reaction.emoji.name) && !user.bot;
 	};
-	const collector = message.createReactionCollector(filter, { time: 30000, dispose: true });
+	const collector = message.createReactionCollector(filter, { time: 60000, dispose: true });
 	const joinEmojiConditions = (p) => { return p.size === 0; }
 	const startEmojiConditions = (p) => { return (game.reqdPlayerCount && p.size === game.reqdPlayerCount) || roledists[p.size] != undefined; }
 
@@ -155,7 +155,8 @@ function processGameChange(message, args) {
 			roleDist: roledists[playerCount],
 			players: new Map(),
 			roles:{sheriff:[],deputy:[],outlaw:[],renegade:[],beggar:[]},
-			dead:[]
+			dead:[],
+			loggingEnabled:true,
 		};
 		_.each(game.roleDist, (count, role) => {
 			for (var i = 0; i < count; i++) {
@@ -164,7 +165,7 @@ function processGameChange(message, args) {
 				game.roles[role].push(game.players.get(name));
 			}
 		});
-		message.channel.send(`Starting a debug game with ${playerCount} players: ${game.players.keys().toListString()}`);
+		message.channel.send(`Starting a debug game with ${playerCount} players: ${[...game.players.keys()].toListString()}`);
 	}
 
 	if (!game.inProgress) {
@@ -180,20 +181,22 @@ function processGameChange(message, args) {
 	var gameOver = false;
 	var winners = {sheriff:[],deputy:[],outlaw:[],renegade:[],beggar:[]};
 	var drawers = {sheriff:[],deputy:[],outlaw:[],renegade:[],beggar:[]};
-	var died = (player) => player.dead;
+	var died = player => player.dead;
 
 	if (debug) {
-		var shuffledLivingPlayers = _.shuffle(game.players.keys().filter(p => !game.dead.includes(game.players.get(p))));
+		var livingPlayers = [];
+		[...game.players].forEach(([name, player]) => { if (!player.dead) livingPlayers.push(name); })
+		var shuffledLivingPlayers = _.shuffle(livingPlayers);
 		if (Math.random() > 0.25) { mentionedPlayers.push(game.players.get(shuffledLivingPlayers[0])) }
 		var r = 1;
 		while (r > Math.random() && shuffledLivingPlayers.length) {
 			shuffledLivingPlayers = _.shuffle(shuffledLivingPlayers)
-			mentionedPlayers.push(shuffledLivingPlayers.shift());
+			mentionedPlayers.push(game.players.get(shuffledLivingPlayers.shift()));
 			r /= 7;
 		}
 	} else {
 		mentionedPlayers = getSortedMentionedUsers(message).filter(u => game.players.get(u.id) != undefined);
-		if (!mentionedPlayers.length) {
+		if (!debug && !mentionedPlayers.length) {
 			message.channel.send(mentionedPlayersErrorMsg);
 			return;
 		}
@@ -205,7 +208,7 @@ function processGameChange(message, args) {
 	var textArg = args.filter(arg => !arg.startsWith('<@'))[0];
 	if (cmd.log.win.includes(textArg)) {
 		console.log('process a win');
-		mentionedPlayers.forEach((player) => {
+		mentionedPlayers.forEach(player => {
 			if (player.role === 'sheriff' || player.role === 'deputy') {
 				winners.sheriff.push(...game.roles.sheriff);
 				winners.deputy.push(...game.roles.deputy);
@@ -217,31 +220,26 @@ function processGameChange(message, args) {
 
 			// Reveal winning players with hidden roles
 			if (player.role != 'sheriff') {
-				gameStateMsg += `${player.username.capitalize()} wins! ` +
+				gameStateMsg += `${player.capitalize()} wins! ` +
 				`They were... ${game.roles[player.role].length > 1 ? roles[player.role].article : 'the'} **${player.role.capitalize()}**!\n`;
 			}
 		});
 		gameOver = 'win';
 	} else if (cmd.log.draw.includes(textArg)) {
 		console.log('process a draw');
-		mentionedPlayers.forEach((player) => {
+		mentionedPlayers.forEach(player => {
 			drawers[player.role].push(player);
 		});
 		gameOver = 'draw';
-	} else if (cmd.log.loss.includes(textArg)) {
+	} else if (cmd.log.loss.includes(textArg) || debug) {
 		console.log('process losses');
-		console.log(mentionedPlayers);
 		sourcePlayer = mentionedPlayers.length > 1 ? mentionedPlayers.shift() : null;
-		console.log(sourcePlayer);
 
 		game.dead.push(...mentionedPlayers);
 
-		mentionedPlayers.forEach((player) => {
+		mentionedPlayers.forEach(player => {
 			player.dead = true;
 			
-			console.log('processing dead player');
-			console.log(player);
-
 			// Check Beggar win con
 			if (player.role === 'beggar' && sourcePlayer && player.id != sourcePlayer.id) {
 				winners.beggar.push(player);
@@ -356,7 +354,7 @@ function processGameChange(message, args) {
 			})
 			gameStateMsg += `${drawList.toListString()} ${drawList.length > 2 ? 'all ' : ''}draw!`
 		}
-		console.log(game);
+		// console.log(game);
 		resetGame();
 	}
 	message.channel.send(gameStateMsg);
