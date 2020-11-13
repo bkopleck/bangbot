@@ -16,7 +16,8 @@
         },
         "help":["help","h"],
         "rules":["rules","rule","r","?"],
-        "cancel":["cancel","end","c"]
+        "cancel":["cancel","end","c"],
+        "bless":["bless"]
     },
     "roles":{
         "sheriff":{

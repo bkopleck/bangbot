@@ -12,9 +12,10 @@ const loggingDisabledMsg = `Logging is disabled for this game.`;
 const mentionedPlayersErrorMsg = `Error - None of the mentioned users are players in this game.`;
 const noGameErrorMsg = 'There are no games currently in progress.';
 const gameOverMsg = '\n:boom: :boom: :boom: **GAME OVER** :boom: :boom: :boom:\n';
-const hundredCowboyMsg = '                  :cowboy:\n            :100::100::100:\n      :100:      :100:      :100:\n:point_down:         :100::100:         :point_down:\n          :100:          :100:\n          :100:          :100:\n           :boot:          :boot:';
+const hundredCowboyMsg = 'STOP! You have been visited by **The :100: Sheriff**\n\n                  :cowboy:\n            :100::100::100:\n      :100:      :100:      :100:\n:point_down:         :100::100:         :point_down:\n          :100:          :100:\n          :100:          :100:\n           :boot:          :boot:\n\nClutch topdecks and perfect mana will come to you, but only if you comment "yeehaw" in the thread.';
 
 const debug = false;
+var waitingForPrompt = false;
 var game = {};
 resetGame();
 
@@ -22,7 +23,7 @@ client.once('ready', () => { console.log('Ready!'); });
 
 client.on('message', message => {
 	if (!message.content.startsWith(prefix) || message.author.bot) return;
-	var args = message.content.toLowerCase().split(' ').slice(1);
+	var args = _.compact(message.content.toLowerCase().split(' ').slice(1));
 
 	if (!args.length && message.channel.type != 'dm') {
 		postGamePromptMessage(message.channel);
@@ -36,8 +37,12 @@ client.on('message', message => {
 		cancelGame(message.channel);
 	} else if (cmd.rules.includes(args[0])) {
 		postRulesMessage(message.channel, args[1]);
+	} else if (cmd.help.includes(args[0])) {
+		postHelpMessage(message.channel);
+	} else if (cmd.bless.includes(args[0])) {
+		postBlessMessage(message.channel);
 	} else {
-		postHelpMessage(message, args);
+		postErrorMessage(message, args);
 	}
 });
 
@@ -48,6 +53,8 @@ client.login(token);
 async function postGamePromptMessage(channel, args) {
 	if (game.inProgress) {
 		channel.send(existingGameErrorMsg);
+		return;
+	} else if (waitingForPrompt) {
 		return;
 	}
 
@@ -77,6 +84,7 @@ async function postGamePromptMessage(channel, args) {
 	const collector = message.createReactionCollector(filter, { time: 60000, dispose: true });
 	const joinEmojiConditions = (p) => { return p.size === 0; }
 	const startEmojiConditions = (p) => { return (game.reqdPlayerCount && p.size === game.reqdPlayerCount) || roledists[p.size] != undefined; }
+	waitingForPrompt = true;
 
 	collector.on('collect', async (reaction) => {
 		if (reaction.emoji.name === emoji.join) {
@@ -86,12 +94,12 @@ async function postGamePromptMessage(channel, args) {
 			toggleBotReactionOnGamePrompt(message, emoji.start, startEmojiConditions(players));
 			toggleBotReactionOnGamePrompt(message, emoji.join, joinEmojiConditions(players));
 		} else if (reaction.emoji.name === emoji.start) {
-			// TODO solve starting two games at once?
 			// If we have enough players, start a game!
 			var players = await getUsersWithReaction(message, emoji.join);
 			if (!game.inProgress && players.size === game.reqdPlayerCount || roledists[players.size]) {
 				startGame(channel, players);
 				collector.stop();
+				waitingForPrompt = false;
 			}
 		}
 	});
@@ -109,6 +117,7 @@ async function postGamePromptMessage(channel, args) {
 		if (!game.inProgress) {
 			channel.send(timeoutMsg);
 		}
+		waitingForPrompt = false;
 	});
 }
 
@@ -405,33 +414,44 @@ function postRulesMessage(channel, role) {
 	channel.send(rulesMsg);
 }
 
-function postHelpMessage(message, args) {
-	var helpMsg = '';
+function postHelpMessage(channel) {
+	channel.send(
+		'**Bang Bot Commands**\n' + 
+		`\`${prefix}\` - Post a prompt to start a game.\n` + 
+		`\`${prefix} ${cmd.custom[0]} <SDORB>\` - Post a prompt to start a game with a custom role distribution. Ex: \`${prefix} ${cmd.custom[0]} SDDOOOO\` would post a prompt to start a 7-player game with a Sheriff, two Deputies, and four Outlaws. If a custom game does not have at least 1 Sheriff and at least 1 Outlaw, the player logging command will be disabled.\n` + 
+		`\`${prefix} @user defeats @user2 (@user3 ... @userN)\`, \`${prefix} @user wins\`, \`${prefix} @user loses\`, \`${prefix} @user (@user2 ... @userN) draws\` - Log player(s) wins/draws/losses, reveal their roles, and process any resulting game logic. Requires a game to be in progress.\n` + 
+		`\`${prefix} ${cmd.remain[0]}\` - Post which roles haven't been eliminated from the current game. Can be used in direct message to bot.\n` + 
+		`\`${prefix} ${cmd.cancel[0]}\` - Cancel a game in progress.\n` + 
+		`\`${prefix} ${cmd.rules[0]}\` - Post summarized role descriptions. Can be used in direct message to bot.\n` +
+		`\`${prefix} ${cmd.rules[0]} <role>\` - Post full rules text for the specified role. Can be used in direct message to bot.\n` +
+		`\`${prefix} ${cmd.help[0]}\` - Post bot commands. Can be used in direct message to bot.\n`
+	);
+}
+
+function postBlessMessage(channel) {
+	channel.send(hundredCowboyMsg);
+}
+
+function postErrorMessage(message, args) {
+	var errorMsg = '**Error:** ';
 
 	// Include error if invalid command triggered help response
 	if (message.channel.type === 'dm' && !args.length) {
-		helpMsg = `Error - A game prompt can't be started with a direct message. Please try again in a server channel.\n\n`;
+		errorMsg += `A game prompt can't be started with a direct message. Please try again in a server channel.`;
 	} else if (message.channel.type === 'dm' && (cmd.custom + cmd.cancel).includes(args[0])) {
-		helpMsg = `Error - The \`${args[0]}\` command can't be used in a direct message. Please try again in a server channel.\n\n`;
+		errorMsg += `The \`${args[0]}\` command can't be used in a direct message. Please try again in a server channel.`;
 	} else if (message.channel.type === 'dm' && message.mentions.users.size > 0) {
-		helpMsg = `Error - The player logging commands can't be used in a direct message. Please try again in a server channel.\n\n`;
+		errorMsg += `The player logging commands can't be used in a direct message. Please try again in a server channel.`;
 	} else if (cmd.custom.includes(args[0]) && args.length <= 1) {
-		helpMsg = `Error - The \`${args[0]}\` command requires additional arguments.\n\n`;
-	} else if (args[0] != "help") {
-		helpMsg = `Error - \`${args[0]}\` is not a recognized command.\n\n`;
+		errorMsg += `The \`${args[0]}\` command requires additional arguments.`;
+	} else if (args[0] != "") {
+		errorMsg += `\`${args[0]}\` is not a recognized command.`;
+	} else {
+		errorMsg += `The command was not recognized.`;
 	}
+	errorMsg +=  ` Use \`${prefix} help\` to see all bot commands.`
 
-	helpMsg += '**Bang Bot Commands**\n' + 
-	`\`${prefix}\` - Post a prompt to start a game.\n` + 
-	`\`${prefix} ${cmd.custom[0]} <SDORB>\` - Post a prompt to start a game with a custom role distribution. Ex: \`${prefix} ${cmd.custom[0]} SDDOOOO\` would post a prompt to start a 7-player game with a Sheriff, two Deputies, and four Outlaws. If a custom game does not have at least 1 Sheriff and at least 1 Outlaw, the player logging command will be disabled.\n` + 
-	`\`${prefix} @user defeats @user2 (@user3 ... @userN)\`, \`${prefix} @user wins\`, \`${prefix} @user loses\`, \`${prefix} @user (@user2 ... @userN) draws\` - Log player(s) wins/draws/losses, reveal their roles, and process any resulting game logic. Requires a game to be in progress.\n` + 
-	`\`${prefix} ${cmd.remain[0]}\` - Post which roles haven't been eliminated from the current game. Can be used in direct message to bot.\n` + 
-	`\`${prefix} ${cmd.cancel[0]}\` - Cancel a game in progress.\n` + 
-	`\`${prefix} ${cmd.rules[0]}\` - Post summarized role descriptions. Can be used in direct message to bot.\n` +
-	`\`${prefix} ${cmd.rules[0]} <role>\` - Post full rules text for the specified role. Can be used in direct message to bot.\n` +
-	`\`${prefix} ${cmd.help[0]}\` - Post bot commands. Can be used in direct message to bot.\n`;
-
-	message.channel.send(helpMsg);
+	message.channel.send(errorMsg);
 }
 
 // HELPER FUNCTIONS
