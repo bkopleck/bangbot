@@ -1,24 +1,4 @@
 {
-    "prefix":"!",
-    "emoji": {
-        "join":"🤠",
-        "start":"💥"
-    },
-    "cmd": {
-        "debug":["debug"],
-        "custom":["custom","roles","dist"],
-        "remain":["remaining","remain","left","remains"],
-        "mention":"<@",
-        "log":{
-            "win":["wins","won","winner","win","w"],
-            "draw":["draws","drew","draw","tie","tied","ties"],
-            "loss":["lost","loses","lose","l","died","dies","die","defeated","defeats","defeat","d","killed","kills","kill"]
-        },
-        "help":["help","h"],
-        "rules":["rules","rule","r","?"],
-        "cancel":["cancel","end","c"],
-        "bless":["bless"]
-    },
     "roles":{
         "sheriff":{
             "code":"s",
