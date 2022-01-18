@@ -1,6 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { ChannelType } = require('discord-api-types/v9');
 const cfg = require('./../config.json');
+const tkn = require('./../tokens.json');
 const _ = require('underscore');
 
 const hundredCowboyMsg = 'STOP! You have been visited by **The :100: Sheriff**\n\n                  :cowboy:\n            :100::100::100:\n      :100:      :100:      :100:\n:point_down:         :100::100:         :point_down:\n          :100:          :100:\n          :100:          :100:\n           :boot:          :boot:\n\nClutch topdecks and perfect mana will come to you, but only if you comment "yeehaw" in the thread.';
@@ -91,8 +92,13 @@ function roleMessage(role) {
 }
 
 function gameStartMessage(roleStrs, sheriff) {
-	return `Roles have been assigned! This game has ${roleStrs.toListString()}.\n` +
-	`${sheriff} will be your Sheriff this game. Good luck, y'all!`;
+	var msg =  `Roles have been assigned! This game has ${roleStrs.toListString()}.\n`;
+	if (tkn.danId && sheriff.id === tkn.danId) {
+		msg += `${sheriff} will be your Begg- sorry, I mean _Sheriff_ this game. Good luck, y'all!`;
+	} else {
+		msg += `${sheriff} will be your Sheriff this game. Good luck, y'all!`;
+	}
+	return msg;
 }
 
 function ruleMessage(role) {
@@ -106,6 +112,8 @@ function ruleMessage(role) {
 	}
 	return rulesMsg;
 }
+
+// UTILITY FUNCTIONS
 
 String.prototype.capitalize = function() {
 	return this.charAt(0).toUpperCase() + this.slice(1);
