@@ -37,6 +37,12 @@
         }
     },
     "roledists":{
+        "5":{
+            "sheriff":1,
+            "deputy":1,
+            "outlaw":2,
+            "beggar":1
+        },
         "6":{
             "sheriff":1,
             "deputy":1,

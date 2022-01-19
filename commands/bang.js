@@ -54,11 +54,12 @@ module.exports = {
 				_.each(roledist, (count, role) => {
 					for (var i = 0; i < count; i++) {
 						roleList.push(role);
-						if (count > 0) {
-							roleStrs.push(
-								`${count} ` + (count > 1 ? cfg.roles[role].plural : role).capitalize()
-							);
-						}
+					}
+
+					if (count > 0) {
+						roleStrs.push(
+							`${count} ` + (count > 1 ? cfg.roles[role].plural : role).capitalize()
+						);
 					}
 				});
 				roleList = _.shuffle(roleList);
